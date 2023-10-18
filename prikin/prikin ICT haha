@@ -1,0 +1,189 @@
+--taskA
+CREATE TABLE Students (
+    student_id INT PRIMARY KEY,
+    first_name VARCHAR(50),
+    last_name VARCHAR(50),
+    birthdate DATE,
+    course_id INT
+);
+
+INSERT INTO Students (student_id, first_name, last_name, birthdate, course_id)
+VALUES
+    (1, 'John', 'Doe', '1995-02-15', 101),
+    (2, 'Jane', 'Smith', '1996-05-20', 102),
+    (3, 'Bob', 'Johnson', '1997-09-10', 101),
+    (4, 'Alice', 'Brown', '1998-03-25', 102),
+    (5, 'Charlie', 'Wilson', '1994-11-12', 103);
+
+SELECT * FROM Students
+WHERE course_id = 101;
+
+SELECT *
+FROM Students
+WHERE birthdate = (SELECT MIN(birthdate) FROM Students)
+    OR birthdate = (SELECT MAX(birthdate) FROM Students);
+
+-- Update the last name for a specific student (e.g., student_id 3)
+UPDATE Students
+SET last_name = 'NewLastName1'
+WHERE student_id = 3;
+
+-- Update the last name for all students in course 101
+UPDATE Students
+SET last_name = 'NewLastName2'
+WHERE course_id = 101;
+
+--taskB
+-- Students Table
+CREATE TABLE Students (
+    student_id INT PRIMARY KEY,
+    first_name VARCHAR(50),
+    last_name VARCHAR(50),
+    birthdate DATE,
+    course_id INT,
+    FOREIGN KEY (course_id) REFERENCES Courses(course_id)
+);
+
+-- Teachers Table
+CREATE TABLE Teachers (
+    teacher_id INT PRIMARY KEY,
+    first_name VARCHAR(50),
+    last_name VARCHAR(50)
+);
+
+-- Courses Table (with teacher_id column to establish the relationship)
+CREATE TABLE Courses (
+    course_id INT PRIMARY KEY,
+    course_name VARCHAR(100),
+    teacher_id INT,
+    FOREIGN KEY (teacher_id) REFERENCES Teachers(teacher_id)
+);
+
+-- Sample Data for Teachers
+INSERT INTO Teachers (teacher_id, first_name, last_name)
+VALUES
+    (1, 'John', 'Smith'),
+    (2, 'Jane', 'Johnson'),
+    (3, 'Robert', 'Williams');
+
+-- Sample Data for Courses (with teacher assignments)
+INSERT INTO Courses (course_id, course_name, teacher_id)
+VALUES
+    (101, 'Mathematics', 1), -- Course 101 is taught by teacher 1
+    (102, 'Science', 2),    -- Course 102 is taught by teacher 2
+    (103, 'History', 3);    -- Course 103 is taught by teacher 3
+
+-- Sample Data for Students
+INSERT INTO Students (student_id, first_name, last_name, birthdate, course_id)
+VALUES
+    (1, 'Alice', 'Brown', '1998-01-15', 101),
+    (2, 'Bob', 'Davis', '1997-05-20', 102),
+    (3, 'Charlie', 'Evans', '1999-09-10', 101);
+
+-- Establishing Relationships between Teachers and Courses
+-- For example, teacher 1 teaches course 101, and teacher 2 teaches course 102
+UPDATE Courses SET teacher_id = 1 WHERE course_id = 101;
+UPDATE Courses SET teacher_id = 2 WHERE course_id = 102;
+
+SELECT
+    s.student_id,
+    s.first_name AS student_first_name,
+    s.last_name AS student_last_name,
+    c.course_name,
+    t.first_name AS teacher_first_name,
+    t.last_name AS teacher_last_name
+FROM Students s
+JOIN Courses c ON s.course_id = c.course_id
+JOIN Teachers t ON c.teacher_id = t.teacher_id;
+
+-- Students Table
+CREATE TABLE Students (
+    student_id INT PRIMARY KEY,
+    first_name VARCHAR(50),
+    last_name VARCHAR(50),
+    birthdate DATE,
+    course_id INT
+);
+
+-- Courses Table
+CREATE TABLE Courses (
+    course_id INT PRIMARY KEY,
+    course_name VARCHAR(100)
+);
+
+-- Grades Table
+CREATE TABLE Grades (
+    grade_id INT PRIMARY KEY,
+    student_id INT,
+    course_id INT,
+    score DECIMAL(4, 2)
+);
+
+-- Sample Data for Students
+INSERT INTO Students (student_id, first_name, last_name, birthdate, course_id)
+VALUES
+    (1, 'Alice', 'Smith', '2000-03-15', 101),
+    (2, 'Bob', 'Johnson', '1999-05-20', 102),
+    (3, 'Charlie', 'Brown', '1998-09-10', 101),
+    (4, 'David', 'Davis', '1999-01-25', 102),
+    (5, 'Emma', 'Wilson', '2001-11-12', 103);
+
+-- Sample Data for Courses
+INSERT INTO Courses (course_id, course_name)
+VALUES
+    (101, 'Mathematics'),
+    (102, 'Science'),
+    (103, 'History');
+
+-- Sample Data for Grades
+INSERT INTO Grades (grade_id, student_id, course_id, score)
+VALUES
+    (1, 1, 101, 90.5),
+    (2, 2, 102, 85.0),
+    (3, 3, 101, 78.5),
+    (4, 4, 102, 92.0),
+    (5, 5, 103, 88.5);
+
+SELECT c.course_name, COUNT(s.student_id) AS num_students
+FROM Courses c
+LEFT JOIN Students s ON c.course_id = s.course_id
+GROUP BY c.course_name;
+
+SELECT c.course_name, AVG(EXTRACT(YEAR FROM NOW()) - EXTRACT(YEAR FROM s.birthdate)) AS avg_age
+FROM Courses c
+LEFT JOIN Students s ON c.course_id = s.course_id
+GROUP BY c.course_name;
+
+SELECT s.student_id, s.first_name, s.last_name, AVG(g.score) AS avg_score
+FROM Students s
+LEFT JOIN Grades g ON s.student_id = g.student_id
+GROUP BY s.student_id, s.first_name, s.last_name
+HAVING AVG(g.score) > (SELECT AVG(score) FROM Grades);
+
+SELECT s.student_id, s.first_name, s.last_name
+FROM Students s
+LEFT JOIN Grades g ON s.student_id = g.student_id
+GROUP BY s.student_id, s.first_name, s.last_name
+HAVING COALESCE(MIN(g.score), 3) >= 3;
+
+--TaskD
+CREATE VIEW StudentCourseGrades AS
+SELECT
+    s.student_id,
+    s.first_name AS student_first_name,
+    s.last_name AS student_last_name,
+    c.course_id,
+    c.course_name,
+    g.score
+FROM Students s
+JOIN Courses c ON s.course_id = c.course_id
+JOIN Grades g ON s.student_id = g.student_id;
+
+SELECT
+    course_id,
+    course_name,
+    AVG(score) AS avg_score
+FROM StudentCourseGrades
+GROUP BY course_id, course_name;
+
+
